@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="APEX Finance">
+<meta name="theme-color" content="#ffb300">
+<title>APEX Finance</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+:root{
+  --void:#000008;--base:#05060f;--surface:#080912;--card:#0c0e1c;--lift:#111326;
+  --wire:#181c30;--wire2:#1e2438;--muted:#3a4268;--ghost:#566088;
+  --text:#c8d0ec;--bright:#e8ecff;
+  --amber:#ffb300;--amber-dim:rgba(255,179,0,0.08);
+  --green:#00e676;--green-dim:rgba(0,230,118,0.08);
+  --red:#ff4444;--red-dim:rgba(255,68,68,0.08);
+  --cyan:#00e5ff;--purple:#b388ff;--pink:#ff6eb4;
+  --mono:'IBM Plex Mono',monospace;--display:'Syne',sans-serif;
+  --sb:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;background:var(--void);overflow:hidden}
+body{font-family:var(--mono);color:var(--text);display:flex;flex-direction:column;height:100dvh;position:relative}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,8,0.12) 3px,rgba(0,0,8,0.12) 4px);pointer-events:none;z-index:9999}
+
+/* ── SPLASH ── */
+#splash{position:fixed;inset:0;background:var(--void);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:opacity 0.5s}
+#splash.hide{opacity:0;pointer-events:none}
+.splash-logo{font-family:var(--display);font-size:52px;font-weight:800;color:var(--amber);letter-spacing:-2px}
+.splash-logo span{color:var(--bright)}
+.splash-sub{font-size:10px;letter-spacing:4px;color:var(--muted);text-transform:uppercase}
+.splash-bar{width:120px;height:2px;background:var(--wire2);border-radius:1px;overflow:hidden;margin-top:24px}
+.splash-fill{height:100%;background:var(--amber);border-radius:1px;animation:sload 1.8s ease forwards}
+@keyframes sload{0%{width:0}100%{width:100%}}
+
+/* ── STATUSBAR ── */
+.sb{height:46px;background:var(--surface);border-bottom:1px solid var(--wire);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;z-index:100}
+.sb-logo{font-family:var(--display);font-size:16px;font-weight:800;color:var(--amber);letter-spacing:-0.5px;flex-shrink:0}
+.sb-logo span{color:var(--bright)}
+.sb-ticker{flex:1;overflow:hidden;position:relative;height:100%;display:flex;align-items:center}
+.ticker-track{display:flex;gap:0;white-space:nowrap;animation:tickscroll 30s linear infinite}
+@keyframes tickscroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.t-item{display:inline-flex;align-items:center;gap:5px;padding:0 14px;border-right:1px solid var(--wire);font-size:9px;flex-shrink:0}
+.t-s{color:var(--ghost);font-weight:600}.t-v{color:var(--bright)}.t-c{font-size:8px}
+.up{color:var(--green)}.dn{color:var(--red)}
+.live-badge{display:flex;align-items:center;gap:4px;background:var(--green-dim);border:1px solid rgba(0,230,118,0.2);border-radius:20px;padding:3px 8px;font-size:8px;color:var(--green);flex-shrink:0}
+.ldot{width:4px;height:4px;border-radius:50%;background:var(--green);animation:lp 1.5s infinite}
+@keyframes lp{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* ── PAGES ── */
+.main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+.main::-webkit-scrollbar{display:none}
+.page{display:none;padding-bottom:calc(68px + var(--sb));animation:pu 0.2s ease}
+.page.active{display:block}
+@keyframes pu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── BOTTOM NAV ── */
+.bnav{position:fixed;bottom:0;left:0;right:0;height:calc(58px + var(--sb));padding-bottom:var(--sb);background:var(--surface);border-top:1px solid var(--wire);display:flex;z-index:200}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:var(--muted);border:none;background:transparent;font-family:var(--mono);font-size:7px;letter-spacing:0.5px;text-transform:uppercase;padding-top:4px;transition:color 0.15s;position:relative}
+.bn .ic{font-size:20px;transition:transform 0.15s}
+.bn.active{color:var(--amber)}
+.bn.active .ic{transform:scale(1.15)}
+.bn-indicator{position:absolute;top:6px;width:18px;height:2px;background:var(--amber);border-radius:1px;opacity:0;transition:opacity 0.15s}
+.bn.active .bn-indicator{opacity:1}
+
+/* ── COMPONENTS ── */
+.page-hdr{padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--wire);position:sticky;top:0;background:var(--void);z-index:50}
+.ph-left{}
+.ph-title{font-family:var(--display);font-size:22px;font-weight:800;color:var(--bright);letter-spacing:-0.5px}
+.ph-title span{color:var(--amber)}
+.ph-sub{font-size:9px;color:var(--muted);margin-top:1px}
+.sec-label{font-size:8px;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;padding:10px 16px 4px}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--wire);border-radius:12px;overflow:hidden}
+.card-hdr{padding:10px 14px;border-bottom:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:9px;letter-spacing:1.5px;color:var(--amber);text-transform:uppercase}
+.cm{font-size:8px;color:var(--muted)}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 16px}
+.kpi{background:var(--card);border:1px solid var(--wire);border-radius:10px;padding:12px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--kc,var(--amber))}
+.kpi-l{font-size:8px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.kpi-v{font-size:21px;font-weight:700;color:var(--bright);letter-spacing:-0.5px}
+.kpi-ic{position:absolute;right:10px;top:10px;font-size:18px;opacity:0.1}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:8px;padding:2px 7px;border-radius:3px;margin-top:5px;font-family:var(--mono)}
+.badge.pos{background:var(--green-dim);color:var(--green)}
+.badge.neg{background:var(--red-dim);color:var(--red)}
+.badge.neu{background:rgba(0,229,255,0.08);color:var(--cyan)}
+.badge.warn{background:rgba(255,179,0,0.1);color:var(--amber)}
+
+/* CHART */
+.chart-card{margin:0 16px 12px;border-radius:12px;overflow:hidden;background:var(--card);border:1px solid var(--wire)}
+.cw{padding:12px;position:relative}
+
+/* PILL TABS */
+.ptabs{display:flex;gap:6px;padding:8px 16px 4px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.ptabs::-webkit-scrollbar{display:none}
+.pill{flex-shrink:0;background:var(--card);border:1px solid var(--wire2);color:var(--muted);font-family:var(--mono);font-size:8px;padding:5px 12px;border-radius:20px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.15s}
+.pill.active{background:var(--amber-dim);border-color:var(--amber);color:var(--amber)}
+
+/* TRANSACTION */
+.tx-item{display:flex;align-items:center;gap:11px;padding:10px 14px;background:var(--card);border:1px solid var(--wire);border-radius:10px;margin-bottom:6px;cursor:pointer;transition:background 0.1s}
+.tx-item:active{background:var(--lift)}
+.tx-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.tx-info{flex:1;min-width:0}
+.tx-n{font-size:12px;font-weight:600;color:var(--bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-d{font-size:9px;color:var(--muted);margin-top:1px}
+.tx-a{font-size:13px;font-weight:700;flex-shrink:0;font-family:var(--mono)}
+
+/* PROGRESS BAR */
+.prog{height:5px;background:var(--wire2);border-radius:3px;overflow:hidden;margin-top:5px}
+.prog-f{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(0.4,0,0.2,1)}
+
+/* COMMODITY CARD */
+.com-card{background:var(--card);border:1px solid var(--wire);border-radius:10px;padding:12px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden}
+.com-card:active{background:var(--lift)}
+.com-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cc,var(--amber))}
+.com-sym{font-size:12px;font-weight:700;color:var(--bright);letter-spacing:0.5px}
+.com-name{font-size:8px;color:var(--muted);margin:2px 0 6px}
+.com-price{font-size:17px;font-weight:700;color:var(--bright)}
+.com-sub{font-size:9px;color:var(--ghost);margin:2px 0}
+
+/* STOCK CARD */
+.sc{background:var(--card);border:1px solid var(--wire);border-radius:10px;padding:12px;cursor:pointer;transition:all 0.15s}
+.sc:active{background:var(--lift)}
+.sc-sym{font-size:12px;font-weight:700;color:var(--bright);letter-spacing:0.5px}
+.sc-nm{font-size:8px;color:var(--muted);margin:2px 0 8px}
+.sc-px{font-size:17px;font-weight:700;color:var(--bright);margin-bottom:3px}
+
+/* TOGGLE */
+.toggle{width:40px;height:22px;background:var(--wire2);border-radius:11px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0}
+.toggle.on{background:var(--amber)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform 0.2s}
+.toggle.on::after{transform:translateX(18px)}
+
+/* SETTING ROW */
+.srow{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-bottom:1px solid var(--wire)}
+.srow:last-child{border-bottom:none}
+.srow-l{flex:1}
+.srow-t{font-size:12px;color:var(--text)}
+.srow-s{font-size:9px;color:var(--muted);margin-top:2px}
+
+/* BUTTONS */
+.btn{background:var(--amber);color:#000;border:none;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.5px;padding:10px 18px;border-radius:9px;cursor:pointer;text-transform:uppercase;transition:opacity 0.15s}
+.btn:active{opacity:0.85}
+.btn-ghost{background:transparent;border:1px solid var(--wire2);color:var(--muted);font-family:var(--mono);font-size:9px;padding:6px 12px;border-radius:8px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.15s}
+.btn-ghost.active,.btn-ghost:active{border-color:var(--amber);color:var(--amber)}
+.btn-full{width:100%;padding:13px;border-radius:10px;font-size:11px;letter-spacing:2px}
+
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,8,0.88);backdrop-filter:blur(6px);z-index:500;display:none;align-items:flex-end}
+.mo.open{display:flex}
+.mbox{background:var(--surface);border:1px solid var(--wire2);border-radius:20px 20px 0 0;width:100%;max-height:88dvh;overflow-y:auto;animation:mup 0.28s cubic-bezier(0.4,0,0.2,1)}
+@keyframes mup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mbox::-webkit-scrollbar{display:none}
+.mhandle{width:36px;height:4px;background:var(--wire2);border-radius:2px;margin:10px auto 0}
+.mtitle{font-family:var(--display);font-size:20px;font-weight:800;color:var(--bright);padding:14px 16px 4px}
+.mbody{padding:12px 16px calc(20px + var(--sb))}
+.field{margin-bottom:12px}
+.flabel{font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
+.finput{width:100%;background:var(--card);border:1px solid var(--wire2);color:var(--bright);font-family:var(--mono);font-size:13px;padding:10px 12px;border-radius:9px;outline:none;transition:border-color 0.15s;-webkit-appearance:none}
+.finput:focus{border-color:var(--amber)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* CATEGORY GRID */
+.catgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.catbtn{background:var(--card);border:1px solid var(--wire2);border-radius:9px;padding:10px 4px;text-align:center;cursor:pointer;transition:all 0.15s}
+.catbtn.sel{border-color:var(--amber);background:var(--amber-dim)}
+.catbtn .ci{font-size:22px;display:block;margin-bottom:3px}
+.catbtn .cl{font-size:7px;color:var(--ghost);letter-spacing:0.5px}
+
+/* PREMIUM GATE */
+.pgate{margin:0 16px 12px;background:linear-gradient(135deg,#120d00,#080800);border:1px solid rgba(255,179,0,0.25);border-radius:14px;padding:22px;text-align:center}
+.pg-ic{font-size:36px;margin-bottom:10px}
+.pg-t{font-family:var(--display);font-size:20px;font-weight:800;color:var(--amber);margin-bottom:6px}
+.pg-d{font-size:10px;color:var(--ghost);line-height:1.7;margin-bottom:16px}
+.pg-feats{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;text-align:left}
+.pg-f{font-size:10px;color:var(--text);display:flex;align-items:center;gap:8px}
+.pg-f::before{content:'◈';color:var(--amber);font-size:9px}
+
+/* ALERT ITEM */
+.alert-item{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--wire);font-size:9px}
+.alert-item:last-child{border-bottom:none}
+.adot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:2px}
+.adot.warn{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.adot.good{background:var(--green);box-shadow:0 0 6px var(--green)}
+.adot.info{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+.adot.bad{background:var(--red);box-shadow:0 0 6px var(--red)}
+.abody{color:var(--ghost);line-height:1.6}
+.abody strong{color:var(--text);display:block;font-size:10px;margin-bottom:1px}
+.atime{color:var(--muted);font-size:8px;margin-top:2px}
+
+/* CALC */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.calc-cell{background:var(--lift);border-radius:9px;padding:11px;text-align:center}
+.calc-l{font-size:8px;color:var(--muted);margin-bottom:3px}
+.calc-v{font-size:15px;font-weight:700;color:var(--amber)}
+
+/* SCORE RING */
+.score-ring{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+.score-num{font-size:22px;font-weight:700;font-family:var(--mono);position:relative;z-index:1}
+
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px}
+.empty-ic{font-size:36px;margin-bottom:8px;opacity:0.35}
+.empty-t{font-size:10px;color:var(--muted);line-height:1.7}
+
+/* NOTIFICATION BANNER */
+.notif{position:fixed;top:50px;left:12px;right:12px;background:var(--card);border:1px solid var(--amber);border-radius:10px;padding:10px 14px;z-index:300;display:flex;align-items:center;gap:10px;font-size:10px;animation:nslide 0.3s ease;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+@keyframes nslide{from{transform:translateY(-10px);opacity:0}to{transform:translateY(0);opacity:1}}
+.notif-ic{font-size:18px;flex-shrink:0}
+.notif-t{color:var(--bright);font-weight:600}
+.notif-s{color:var(--muted);font-size:9px;margin-top:1px}
+
+/* DIVIDER */
+.div{height:1px;background:var(--wire);margin:0 16px}
+
+/* GOLD GRAPH */
+#goldChart{height:80px}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">APEX<span>fin</span></div>
+  <div class="splash-sub">Financial Terminal</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="sb" id="sbEl" style="display:none">
+  <div class="sb-logo">AP<span>EX</span></div>
+  <div class="sb-ticker">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+  <div class="live-badge"><div class="ldot"></div>LIVE</div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="mainEl" style="display:none">
+
+<!-- ══ HOME ══════════════════════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+  <div class="page-hdr">
+    <div>
+      <div class="ph-title">Merhaba <span id="greetName">👋</span></div>
+      <div class="ph-sub" id="homeDate"></div>
+    </div>
+    <button class="btn" style="font-size:9px;padding:8px 14px" onclick="openAddModal()">+ EKLE</button>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi" style="--kc:var(--amber)">
+      <div class="kpi-ic">💰</div>
+      <div class="kpi-l">Aylık Gelir</div>
+      <div class="kpi-v" id="h-rev">₺0</div>
+      <div class="badge pos" id="h-revb">+0%</div>
+    </div>
+    <div class="kpi" style="--kc:var(--red)">
+      <div class="kpi-ic">💸</div>
+      <div class="kpi-l">Aylık Gider</div>
+      <div class="kpi-v" id="h-exp">₺0</div>
+      <div class="badge neg" id="h-expb">0%</div>
+    </div>
+    <div class="kpi" style="--kc:var(--green)">
+      <div class="kpi-ic">📈</div>
+      <div class="kpi-l">Net Kâr</div>
+      <div class="kpi-v" id="h-profit">₺0</div>
+      <div class="badge pos" id="h-profitb">+0%</div>
+    </div>
+    <div class="kpi" style="--kc:var(--cyan)">
+      <div class="kpi-ic">🎯</div>
+      <div class="kpi-l">Tasarruf Oranı</div>
+      <div class="kpi-v" id="h-save">%0</div>
+      <div class="badge neu">Bu Ay</div>
+    </div>
+  </div>
+
+  <!-- Ana grafik -->
+  <div class="chart-card">
+    <div class="card-hdr"><span class="ct">Gelir & Gider Trendi</span><span class="cm">12 ay</span></div>
+    <div class="cw" style="height:190px"><canvas id="homeChart"></canvas></div>
+  </div>
+
+  <!-- Anlık kurlar -->
+  <div class="sec-label">CANLI DÖVİZ KURLARI</div>
+  <div class="card" style="margin:0 16px 12px" id="fxCard"></div>
+
+  <!-- Altın anlık -->
+  <div class="sec-label">ALTIN & EMTİA · CANLI</div>
+  <div class="card" style="margin:0 16px 12px">
+    <div class="card-hdr"><span class="ct">Spot Fiyatlar</span><span class="cm" id="metalTime">Yükleniyor...</span></div>
+    <div id="homeMetals" style="padding:8px 0"></div>
+  </div>
+
+  <!-- Hava durumu -->
+  <div class="sec-label">HAVA DURUMU · ANKARA</div>
+  <div class="card" style="margin:0 16px 12px" id="weatherCard">
+    <div style="padding:12px;font-size:9px;color:var(--muted)">Yükleniyor...</div>
+  </div>
+
+  <!-- Son işlemler -->
+  <div class="sec-label">SON İŞLEMLER</div>
+  <div style="padding:0 16px 12px" id="recentList"></div>
+
+  <!-- AI Skor -->
+  <div class="sec-label">İŞLETME SAĞLIK SKORU</div>
+  <div class="card" style="margin:0 16px 12px">
+    <div style="padding:14px;display:flex;align-items:center;gap:14px">
+      <div class="score-ring" id="scoreRing">
+        <svg style="position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)">
+          <circle cx="36" cy="36" r="30" fill="none" stroke="var(--wire2)" stroke-width="5"/>
+          <circle id="scoreArc" cx="36" cy="36" r="30" fill="none" stroke="var(--green)" stroke-width="5" stroke-dasharray="188.5" stroke-dashoffset="30" stroke-linecap="round"/>
+        </svg>
+        <span class="score-num" style="color:var(--green)" id="scoreNum">84</span>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--bright);margin-bottom:4px" id="scoreLabel">Güçlü İşletme</div>
+        <div style="font-size:9px;color:var(--ghost);line-height:1.7" id="scoreDesc">Gelir YoY +18.2% büyüyor. Gider oranı düşüyor. Q3'te %28 marj hedefi yolunda.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FİNANS ═══════════════════════════════════════════════════════ -->
+<div class="page" id="page-finance">
+  <div class="page-hdr">
+    <div><div class="ph-title">Finans <span>◈</span></div><div class="ph-sub">İşletme & Kişisel</div></div>
+    <button class="btn-ghost" onclick="openAddModal()">+ Ekle</button>
+  </div>
+
+  <div class="ptabs" id="finTabs">
+    <div class="pill active" onclick="switchTab('fin','business',this)">İŞLETME</div>
+    <div class="pill" onclick="switchTab('fin','personal',this)">KİŞİSEL</div>
+    <div class="pill" onclick="switchTab('fin','budget',this)">BÜTÇE</div>
+    <div class="pill" onclick="switchTab('fin','goals',this)">HEDEFLER</div>
+    <div class="pill" onclick="switchTab('fin','alerts',this)">UYARILAR</div>
+  </div>
+
+  <div id="ftab-business">
+    <div class="kpi-grid">
+      <div class="kpi" style="--kc:var(--amber)"><div class="kpi-l">Yıllık Gelir</div><div class="kpi-v" id="biz-rev">₺0</div><div class="badge pos">+18.2%</div></div>
+      <div class="kpi" style="--kc:var(--red)"><div class="kpi-l">Yıllık Gider</div><div class="kpi-v" id="biz-exp">₺0</div><div class="badge neg">+12.1%</div></div>
+      <div class="kpi" style="--kc:var(--green)"><div class="kpi-l">Net Kâr</div><div class="kpi-v" id="biz-profit">₺0</div><div class="badge pos">+31.4%</div></div>
+      <div class="kpi" style="--kc:var(--cyan)"><div class="kpi-l">Kâr Marjı</div><div class="kpi-v" id="biz-margin">%0</div><div class="badge warn">Hedef %30</div></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-hdr"><span class="ct">Aylık Breakdown</span><span class="cm">2025</span></div>
+      <div class="cw" style="height:180px"><canvas id="bizChart"></canvas></div>
+    </div>
+    <div class="sec-label">GİDER KATEGORİLERİ</div>
+    <div class="card" style="margin:0 16px 12px">
+      <div class="cw" style="height:160px"><canvas id="expDonut"></canvas></div>
+    </div>
+    <div class="sec-label">AYLIK ÖZET</div>
+    <div style="padding:0 16px 12px" id="monthSummary"></div>
+  </div>
+
+  <div id="ftab-personal" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi" style="--kc:var(--green)"><div class="kpi-l">Aylık Gelir</div><div class="kpi-v">₺12,600</div><div class="badge pos">+5.0%</div></div>
+      <div class="kpi" style="--kc:var(--red)"><div class="kpi-l">Aylık Harcama</div><div class="kpi-v">₺8,520</div><div class="badge neg">%67.6</div></div>
+      <div class="kpi" style="--kc:var(--amber)"><div class="kpi-l">Birikim</div><div class="kpi-v">₺4,080</div><div class="badge pos">%32.4</div></div>
+      <div class="kpi" style="--kc:var(--purple)"><div class="kpi-l">Net Değer</div><div class="kpi-v">₺74K</div><div class="badge pos">+8.2%</div></div>
+    </div>
+    <div class="sec-label">HARCAMA KATEGORİLERİ</div>
+    <div style="padding:0 16px 12px" id="spendCats"></div>
+  </div>
+
+  <div id="ftab-budget" style="display:none">
+    <div class="card" style="margin:12px 16px">
+      <div class="card-hdr"><span class="ct">Aylık Bütçe</span><span class="cm" id="budgetMonth">Mar 2025</span></div>
+      <div style="padding:14px" id="budgetBars"></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-hdr"><span class="ct">Bütçe Trendi</span></div>
+      <div class="cw" style="height:150px"><canvas id="budgetChart"></canvas></div>
+    </div>
+  </div>
+
+  <div id="ftab-goals" style="display:none">
+    <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px" id="goalsList"></div>
+  </div>
+
+  <div id="ftab-alerts" style="display:none">
+    <div class="card" style="margin:12px 16px" id="alertsList"></div>
+  </div>
+</div>
+
+<!-- ══ MARKETS ════════════════════════════════════════════════════════ -->
+<div class="page" id="page-markets">
+  <div class="page-hdr">
+    <div><div class="ph-title">Piyasalar <span>◈</span></div><div class="ph-sub">Canlı fiyatlar</div></div>
+  </div>
+
+  <div class="ptabs" id="mktTabs">
+    <div class="pill active" onclick="switchTab('mkt','gold',this)">ALTIN & EMTİA</div>
+    <div class="pill" onclick="switchTab('mkt','crypto',this)">KRİPTO</div>
+    <div class="pill" onclick="switchTab('mkt','forex',this)">DÖVİZ</div>
+    <div class="pill" onclick="switchTab('mkt','calc',this)">HESAPLAYICI</div>
+    <div class="pill" onclick="switchTab('mkt','portfolio',this)">PORTFÖY</div>
+  </div>
+
+  <div id="mtab-gold">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 16px 12px" id="metalGrid"></div>
+    <div class="chart-card">
+      <div class="card-hdr"><span class="ct">Altın Fiyat Grafiği</span><span class="cm">Simüle · 30dk</span></div>
+      <div class="cw" style="height:120px"><canvas id="goldChart"></canvas></div>
+    </div>
+  </div>
+
+  <div id="mtab-crypto" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 16px 12px" id="cryptoGrid"></div>
+  </div>
+
+  <div id="mtab-forex" style="display:none">
+    <div class="card" style="margin:8px 16px 12px" id="forexCard"></div>
+    <div class="chart-card">
+      <div class="card-hdr"><span class="ct">USD/TRY Trendi</span><span class="cm">Canlı</span></div>
+      <div class="cw" style="height:120px"><canvas id="fxChart"></canvas></div>
+    </div>
+  </div>
+
+  <div id="mtab-calc" style="display:none">
+    <div class="card" style="margin:8px 16px 12px">
+      <div class="card-hdr"><span class="ct">Altın Hesaplayıcı</span><span class="cm">Gerçek Anlık Fiyat</span></div>
+      <div style="padding:14px" id="goldCalc"></div>
+    </div>
+    <div class="card" style="margin:0 16px 12px">
+      <div class="card-hdr"><span class="ct">Döviz Çevirici</span></div>
+      <div style="padding:14px">
+        <div class="field">
+          <div class="flabel">Miktar</div>
+          <input class="finput" type="number" id="fxCalcAmt" placeholder="100" oninput="calcFX()" inputmode="decimal">
+        </div>
+        <div class="fgrid" style="margin-bottom:10px">
+          <div class="field" style="margin:0">
+            <div class="flabel">Kaynak</div>
+            <select class="finput" id="fxFrom" onchange="calcFX()">
+              <option value="USD">USD</option><option value="EUR">EUR</option>
+              <option value="GBP">GBP</option><option value="TRY" selected>TRY</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0">
+            <div class="flabel">Hedef</div>
+            <select class="finput" id="fxTo" onchange="calcFX()">
+              <option value="USD" selected>USD</option><option value="EUR">EUR</option>
+              <option value="GBP">GBP</option><option value="TRY">TRY</option>
+            </select>
+          </div>
+        </div>
+        <div style="background:var(--lift);border-radius:9px;padding:14px;text-align:center">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:4px">SONUÇ</div>
+          <div style="font-size:24px;font-weight:700;color:var(--amber)" id="fxResult">—</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:4px" id="fxRate">Kur yükleniyor...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mtab-portfolio" style="display:none">
+    <div class="pgate">
+      <div class="pg-ic">💼</div>
+      <div class="pg-t">Portföy Takibi</div>
+      <div class="pg-d">Gerçek yatırımlarını takip et, kâr/zarar görüntüle ve AI destekli dengeleme önerileri al.</div>
+      <div class="pg-feats">
+        <div class="pg-f">Sınırsız pozisyon takibi</div>
+        <div class="pg-f">Anlık kâr/zarar hesaplama</div>
+        <div class="pg-f">AI dengeleme önerileri</div>
+        <div class="pg-f">Vergi raporu çıktısı</div>
+      </div>
+      <button class="btn btn-full" onclick="openPremium()">PREMİUM'A GEÇ · ₺149/AY</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AI ════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-ai">
+  <div class="page-hdr">
+    <div><div class="ph-title">AI <span>Engine</span></div><div class="ph-sub">APEX-ML · Tahmin Motoru</div></div>
+    <span style="font-size:9px;color:var(--amber);font-family:var(--mono)">v2.1</span>
+  </div>
+
+  <div class="sec-label">6 AYLIK GELİR TAHMİNİ</div>
+  <div class="card" style="margin:0 16px 12px" id="aiForecastCard"></div>
+
+  <div class="chart-card">
+    <div class="card-hdr"><span class="ct">Tahmin Grafiği</span><span class="cm">Gerçek + Tahmini</span></div>
+    <div class="cw" style="height:160px"><canvas id="aiChart"></canvas></div>
+  </div>
+
+  <div class="sec-label">PATTERN ANALİZİ</div>
+  <div style="padding:0 16px 12px;display:flex;flex-direction:column;gap:8px" id="aiInsights"></div>
+
+  <div class="sec-label">ANOMALİ TESPİTİ</div>
+  <div class="card" style="margin:0 16px 12px">
+    <div style="padding:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="font-size:22px">🔍</span>
+        <div>
+          <div style="font-size:11px;color:var(--bright);font-weight:600">Anomali tespit edilmedi</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px">Tüm metrikler beklenen aralıkta</div>
+        </div>
+      </div>
+      <div class="prog"><div class="prog-f" style="width:92%;background:var(--green)"></div></div>
+      <div style="font-size:8px;color:var(--muted);margin-top:4px">Güven skoru: %92</div>
+    </div>
+  </div>
+
+  <div class="sec-label">AKILLI ÖNERİLER</div>
+  <div style="padding:0 16px 12px;display:flex;flex-direction:column;gap:8px" id="aiTips"></div>
+
+  <div class="pgate">
+    <div class="pg-ic">🤖</div>
+    <div class="pg-t">Gelişmiş AI</div>
+    <div class="pg-d">Senin işletme verinle eğitilmiş özel ML modeli, haftalık strateji raporu ve 90 günlük nakit akışı tahmini.</div>
+    <div class="pg-feats">
+      <div class="pg-f">İşletmene özel ML modeli</div>
+      <div class="pg-f">Haftalık AI strateji raporu</div>
+      <div class="pg-f">90 günlük nakit akışı tahmini</div>
+      <div class="pg-f">Rakip karşılaştırma analizi</div>
+    </div>
+    <button class="btn btn-full" onclick="openPremium()">PREMİUM'A GEÇ · ₺149/AY</button>
+  </div>
+</div>
+
+<!-- ══ AYARLAR ════════════════════════════════════════════════════════ -->
+<div class="page" id="page-settings">
+  <div class="page-hdr">
+    <div><div class="ph-title">Ayarlar <span>◈</span></div></div>
+  </div>
+
+  <div class="sec-label">PROFİL</div>
+  <div class="card" style="margin:0 16px 12px">
+    <div style="padding:14px;display:flex;align-items:center;gap:14px">
+      <div style="width:50px;height:50px;border-radius:14px;background:var(--amber-dim);border:1px solid rgba(255,179,0,0.3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">◈</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700;color:var(--bright)" id="profileName">Ücretsiz Kullanıcı</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">APEX Finance · Free Plan</div>
+        <div style="margin-top:8px"><button class="btn" style="font-size:9px;padding:6px 14px" onclick="openPremium()">Premium'a Geç</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-label">İŞLETME</div>
+  <div class="card" style="margin:0 16px 12px">
+    <div class="srow">
+      <div class="srow-l"><div class="srow-t">İşletme Adı</div><div class="srow-s" id="setBizName">Örnek İşletme</div></div>
+      <button class="btn-ghost" onclick="editName()">Düzenle</button>
+    </div>
+    <div class="srow">
+      <div class="srow-l"><div class="srow-t">Sektör</div><div class="srow-s" id="setBizType">Kafe & Restaurant</div></div>
+      <button class="btn-ghost" onclick="openSectorModal()">Değiştir</button>
+    </div>
+    <div class="srow">
+      <div class="srow-l"><div class="srow-t">Para Birimi</div><div class="srow-s">TRY (₺)</div></div>
+      <span style="font-size:10px;color:var(--muted)">TRY</span>
+    </div>
+    <div class="srow" style="border:none">
+      <div class="srow-l"><div class="srow-t">Şehir (Hava Durumu)</div><div class="srow-s" id="setCity">Ankara</div></div>
+      <button class="btn-ghost" onclick="editCity()">Değiştir</button>
+    </div>
+  </div>
+
+  <div class="sec-label">BİLDİRİMLER</div>
+  <div class="card" style="margin:0 16px 12px">
+    <div class="srow"><div class="srow-l"><div class="srow-t">Günlük Özet</div><div class="srow-s">Her sabah finansal özet</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+    <div class="srow"><div class="srow-l"><div class="srow-t">Bütçe Uyarıları</div><div class="srow-s">Bütçe aşımında bildir</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+    <div class="srow"><div class="srow-l"><div class="srow-t">AI İçgörüleri</div><div class="srow-s">Haftalık AI analiz raporu</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+    <div class="srow" style="border:none"><div class="srow-l"><div class="srow-t">Piyasa Uyarıları</div><div class="srow-s">Altın & döviz hareketleri</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+  </div>
+
+  <div class="sec-label">UYGULAMA</div>
+  <div class="card" style="margin:0 16px 12px">
+    <div class="srow"><div class="srow-l"><div class="srow-t">Versiyon</div></div><span style="font-size:10px;color:var(--muted)">1.0.0</span></div>
+    <div class="srow"><div class="srow-l"><div class="srow-t">Geliştirici</div></div><span style="font-size:10px;color:var(--amber)">finosdev</span></div>
+    <div class="srow"><div class="srow-l"><div class="srow-t">Veri Sıfırla</div><div class="srow-s">Tüm işlemleri temizle</div></div><button class="btn-ghost" style="border-color:var(--red);color:var(--red)" onclick="resetData()">Sıfırla</button></div>
+    <div class="srow" style="border:none"><div class="srow-l"><div class="srow-t">Cihaza Yükle (PWA)</div><div class="srow-s">Ana ekrana ekle</div></div><button class="btn-ghost" onclick="promptInstall()">Yükle</button></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- BOTTOM NAV -->
+<div class="bnav" id="bnavEl" style="display:none">
+  <button class="bn active" onclick="goPage('home',this)"><div class="bn-indicator"></div><span class="ic">◈</span>Ana Sayfa</button>
+  <button class="bn" onclick="goPage('finance',this)"><div class="bn-indicator"></div><span class="ic">💰</span>Finans</button>
+  <button class="bn" onclick="goPage('markets',this)"><div class="bn-indicator"></div><span class="ic">📈</span>Piyasalar</button>
+  <button class="bn" onclick="goPage('ai',this)"><div class="bn-indicator"></div><span class="ic">🤖</span>AI</button>
+  <button class="bn" onclick="goPage('settings',this)"><div class="bn-indicator"></div><span class="ic">⚙️</span>Ayarlar</button>
+</div>
+
+<!-- ADD MODAL -->
+<div class="mo" id="addMo">
+  <div class="mbox">
+    <div class="mhandle"></div>
+    <div class="mtitle">İşlem Ekle</div>
+    <div class="mbody">
+      <div class="field">
+        <div class="flabel">Tür</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn-ghost active" id="t-inc" onclick="setTxType('income')">+ GELİR</button>
+          <button class="btn-ghost" id="t-exp" onclick="setTxType('expense')">− GİDER</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="flabel">Kategori</div>
+        <div class="catgrid" id="catGrid"></div>
+      </div>
+      <div class="fgrid">
+        <div class="field"><div class="flabel">Tutar (₺)</div><input class="finput" type="number" id="txAmt" placeholder="0.00" inputmode="decimal"></div>
+        <div class="field"><div class="flabel">Ay</div>
+          <select class="finput" id="txMonth">
+            <option>Ocak</option><option>Şubat</option><option>Mart</option><option>Nisan</option>
+            <option>Mayıs</option><option>Haziran</option><option>Temmuz</option><option>Ağustos</option>
+            <option>Eylül</option><option>Ekim</option><option>Kasım</option><option>Aralık</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><div class="flabel">Açıklama</div><input class="finput" type="text" id="txDesc" placeholder="İsteğe bağlı not"></div>
+      <button class="btn btn-full" onclick="saveTx()">KAYDET</button>
+    </div>
+  </div>
+</div>
+
+<!-- PREMIUM MODAL -->
+<div class="mo" id="premMo">
+  <div class="mbox">
+    <div class="mhandle"></div>
+    <div class="mbody" style="padding-top:10px">
+      <div style="text-align:center;padding:10px 0 18px">
+        <div style="font-size:44px;margin-bottom:8px">◈</div>
+        <div style="font-family:var(--display);font-size:26px;font-weight:800;color:var(--amber)">APEX Premium</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Tam terminali aç</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:18px">
+        <div style="flex:1;background:var(--lift);border-radius:10px;padding:14px;text-align:center;border:1px solid var(--wire2)">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:6px;letter-spacing:1px">AYLIK</div>
+          <div style="font-size:24px;font-weight:800;color:var(--bright)">₺149</div>
+          <div style="font-size:8px;color:var(--muted);margin-top:2px">/ ay</div>
+        </div>
+        <div style="flex:1;background:var(--amber-dim);border-radius:10px;padding:14px;text-align:center;border:1px solid var(--amber);position:relative">
+          <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--amber);color:#000;font-size:8px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap">EN POPÜLER</div>
+          <div style="font-size:9px;color:var(--amber);margin-bottom:6px;letter-spacing:1px">YILLIK</div>
+          <div style="font-size:24px;font-weight:800;color:var(--bright)">₺999</div>
+          <div style="font-size:8px;color:var(--green);margin-top:2px">%44 tasarruf</div>
+        </div>
+      </div>
+      <div class="pg-feats" style="margin-bottom:18px">
+        <div class="pg-f">Sınırsız işlem & geçmiş</div>
+        <div class="pg-f">Gelişmiş AI tahmin motoru</div>
+        <div class="pg-f">Portföy takibi & gerçek P&L</div>
+        <div class="pg-f">PDF & Excel rapor çıktısı</div>
+        <div class="pg-f">Çoklu işletme desteği</div>
+        <div class="pg-f">Öncelikli destek</div>
+      </div>
+      <button class="btn btn-full" style="margin-bottom:10px">7 GÜN ÜCRETSİZ DENE</button>
+      <button class="btn btn-full" style="background:transparent;border:1px solid var(--wire2);color:var(--muted)" onclick="closeMo('premMo')">Belki sonra</button>
+    </div>
+  </div>
+</div>
+
+<!-- SECTOR MODAL -->
+<div class="mo" id="sectorMo">
+  <div class="mbox">
+    <div class="mhandle"></div>
+    <div class="mtitle">Sektör Seç</div>
+    <div class="mbody">
+      <div style="display:flex;flex-direction:column;gap:8px" id="sectorList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════════
+const MONTHS = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+const MONTHS_FULL = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+const state = {
+  bizData: {
+    rev:  [18000,16500,21000,21600,24000,27000,30000,28500,23400,21000,19500,25500],
+    mat:  [6600, 6000, 7500, 7800, 8700, 9900,11100,10500, 8400, 7500, 6900, 9300],
+    staff:[4500, 4500, 4500, 4500, 4500, 4500, 5400, 5400, 4500, 4500, 4500, 4500],
+    rent: [3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000],
+    util: [1200, 1140, 1050,  960,  900,  960, 1140, 1170, 1050, 1140, 1260, 1350],
+    mkt:  [ 750,  600,  750,  900,  750, 1050, 1200, 1050,  750,  600,  600,  900],
+  },
+  txs: [
+    {type:'income', cat:'💼', name:'Masa Servisi', amt:7200, month:2, desc:'Mart geliri', ts:Date.now()-3600000},
+    {type:'expense',cat:'🛒', name:'Hammadde', amt:2640, month:2, desc:'Aylık sipariş', ts:Date.now()-7200000},
+    {type:'income', cat:'📦', name:'Paket Servis', amt:1950, month:2, desc:'Online platform', ts:Date.now()-86400000},
+    {type:'expense',cat:'👥', name:'Maaşlar', amt:4500, month:2, desc:'Mart maaşları', ts:Date.now()-172800000},
+    {type:'expense',cat:'🏠', name:'Kira', amt:3000, month:2, desc:'Aylık kira', ts:Date.now()-259200000},
+  ],
+  metals: {gold:2034, silver:22.8, platinum:948, palladium:980},
+  fx: {},
+  txType: 'income',
+  selCat: null,
+  selCatData: null,
+  charts: {},
+  bizName: 'Örnek Kafe',
+  city: 'Ankara',
+  cityCoords: {lat:39.93, lon:32.85},
+  installPrompt: null,
+  fxHistory: {usdtry: []},
+  goldHistory: [],
+};
+
+// ════════════════════════════════════════════════════════════════════
+// SPLASH & INIT
+// ════════════════════════════════════════════════════════════════════
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); state.installPrompt = e; });
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('hide');
+    document.getElementById('sbEl').style.display = 'flex';
+    document.getElementById('mainEl').style.display = 'block';
+    document.getElementById('bnavEl').style.display = 'flex';
+    init();
+  }, 2000);
+});
+
+function init() {
+  setHomeDate();
+  startTicker();
+  fetchFX();
+  fetchMetals();
+  fetchWeather();
+  buildHome();
+  buildFinance();
+  buildAI();
+  buildMarkets();
+  setInterval(fetchFX, 30000);
+  setInterval(fetchMetals, 60000);
+  setInterval(() => { buildTicker(); }, 3000);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// DATE & GREETING
+// ════════════════════════════════════════════════════════════════════
+function setHomeDate() {
+  const now = new Date();
+  const h = now.getHours();
+  const greet = h < 12 ? 'Günaydın' : h < 18 ? 'İyi günler' : 'İyi akşamlar';
+  document.getElementById('greetName').textContent = greet + ' 👋';
+  document.getElementById('homeDate').textContent = now.toLocaleDateString('tr-TR', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const bm = document.getElementById('budgetMonth');
+  if(bm) bm.textContent = now.toLocaleDateString('tr-TR', {month:'long',year:'numeric'});
+}
+
+// ════════════════════════════════════════════════════════════════════
+// TICKER
+// ════════════════════════════════════════════════════════════════════
+const tickerItems = [
+  {s:'BTC', b:65420, v:0.015},{s:'ETH', b:3180, v:0.018},
+  {s:'ALTIN', b:2034, v:0.004},{s:'GÜMÜŞ', b:22.8, v:0.008},
+  {s:'EUR/TRY', b:34.82, v:0.003},{s:'USD/TRY', b:32.45, v:0.003},
+  {s:'AVAX', b:38.4, v:0.02},{s:'SOL', b:142, v:0.022},
+];
+let tv = tickerItems.map(t=>t.b);
+
+function buildTicker() {
+  tickerItems.forEach((t,i) => { tv[i] *= (1+(Math.random()-0.5)*t.v*0.08); });
+  // Use real metal prices if available
+  if(state.metals.gold) tv[2] = state.metals.gold;
+  if(state.metals.silver) tv[3] = state.metals.silver;
+  if(state.fx['EUR/TRY']) tv[4] = state.fx['EUR/TRY'];
+  if(state.fx['USD/TRY']) tv[5] = state.fx['USD/TRY'];
+
+  const html = tickerItems.map((t,i) => {
+    const chg = ((tv[i]-t.b)/t.b*100).toFixed(2);
+    const up = parseFloat(chg) >= 0;
+    return `<div class="t-item"><span class="t-s">${t.s}</span><span class="t-v">${tv[i] > 100 ? tv[i].toFixed(2) : tv[i].toFixed(4)}</span><span class="t-c ${up?'up':'dn'}">${up?'▲':'▼'}${Math.abs(chg)}%</span></div>`;
+  }).join('');
+  // Duplicate for seamless loop
+  const track = document.getElementById('tickerTrack');
+  if(track) track.innerHTML = html + html;
+}
+
+function startTicker() { buildTicker(); }
+
+// ════════════════════════════════════════════════════════════════════
+// REAL APIs
+// ════════════════════════════════════════════════════════════════════
+async function fetchFX() {
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch('https://api.frankfurter.app/latest?from=USD&to=TRY,EUR,GBP,JPY,CHF'),
+      fetch('https://api.frankfurter.app/latest?from=EUR&to=TRY,USD,GBP')
+    ]);
+    const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
+    state.fx = {
+      'USD/TRY': d1.rates.TRY,
+      'EUR/TRY': d2.rates.TRY,
+      'EUR/USD': d2.rates.USD,
+      'GBP/USD': 1/d1.rates.GBP,
+      'USD/JPY': d1.rates.JPY,
+      'USD/CHF': d1.rates.CHF,
+      'USD/EUR': d1.rates.EUR,
+    };
+    // Track USD/TRY history
+    state.fxHistory.usdtry.push(state.fx['USD/TRY']);
+    if(state.fxHistory.usdtry.length > 20) state.fxHistory.usdtry.shift();
+    renderFX();
+    calcFX();
+    if(state.charts.fx) updateFXChart();
+  } catch(e) {
+    // fallback
+    if(!state.fx['USD/TRY']) {
+      state.fx = {'USD/TRY':32.45,'EUR/TRY':34.82,'EUR/USD':1.082,'GBP/USD':1.271,'USD/JPY':151.2,'USD/CHF':0.895,'USD/EUR':0.924};
+      renderFX();
+    }
+  }
+}
+
+async function fetchMetals() {
+  try {
+    const res = await fetch('https://api.metals.live/v1/spot');
+    const data = await res.json();
+    const process = (d) => {
+      if(d.gold)     state.metals.gold     = d.gold;
+      if(d.silver)   state.metals.silver   = d.silver;
+      if(d.platinum) state.metals.platinum = d.platinum;
+      if(d.palladium)state.metals.palladium= d.palladium;
+    };
+    if(Array.isArray(data)) data.forEach(process);
+    else process(data);
+    state.goldHistory.push(state.metals.gold);
+    if(state.goldHistory.length > 30) state.goldHistory.shift();
+    renderMetals();
+    if(state.charts.gold) updateGoldChart();
+  } catch(e) {
+    // simulate small movement
+    Object.keys(state.metals).forEach(k => { state.metals[k] *= (1+(Math.random()-0.5)*0.003); });
+    state.goldHistory.push(state.metals.gold);
+    if(state.goldHistory.length > 30) state.goldHistory.shift();
+    renderMetals();
+  }
+}
+
+async function fetchWeather() {
+  try {
+    const {lat, lon} = state.cityCoords;
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,apparent_temperature`);
+    const d = await res.json();
+    const c = d.current;
+    const icons = [[0,'☀️','Açık'],[1,'🌤','Az Bulutlu'],[2,'⛅','Parçalı Bulutlu'],[3,'🌥','Bulutlu'],[45,'🌫','Sisli'],[51,'🌦','Çisenti'],[61,'🌧','Yağmurlu'],[71,'🌨','Karlı'],[80,'🌦','Sağanak'],[95,'⛈','Fırtına']];
+    const wcode = c.weather_code;
+    const match = [...icons].reverse().find(([k])=>wcode>=k) || icons[0];
+    const [,icon,desc] = match;
+    document.getElementById('weatherCard').innerHTML = `
+      <div style="padding:14px;display:flex;align-items:center;gap:14px">
+        <div style="font-size:42px">${icon}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:flex-end;gap:4px">
+            <div style="font-size:32px;font-weight:700;color:var(--bright)">${Math.round(c.temperature_2m)}</div>
+            <div style="font-size:14px;color:var(--muted);padding-bottom:4px">°C</div>
+          </div>
+          <div style="font-size:11px;color:var(--ghost)">${desc} · ${state.city}</div>
+          <div style="display:flex;gap:12px;margin-top:6px;font-size:9px;color:var(--muted)">
+            <span>💧 %${c.relative_humidity_2m}</span>
+            <span>💨 ${Math.round(c.wind_speed_10m)} km/s</span>
+            <span>🌡 Hissedilen ${Math.round(c.apparent_temperature)}°C</span>
+          </div>
+        </div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('weatherCard').innerHTML = `<div style="padding:12px;font-size:9px;color:var(--muted)">Hava durumu yüklenemedi</div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// RENDER FX
+// ════════════════════════════════════════════════════════════════════
+function renderFX() {
+  const pairs = Object.entries(state.fx);
+  const html = pairs.map(([pair, rate]) => {
+    const base = {
+      'USD/TRY':32.45,'EUR/TRY':34.82,'EUR/USD':1.082,
+      'GBP/USD':1.271,'USD/JPY':151.2,'USD/CHF':0.895,'USD/EUR':0.924
+    }[pair] || rate;
+    const chg = ((rate-base)/base*100).toFixed(3);
+    const up = parseFloat(chg) >= 0;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--wire);font-size:10px">
+      <span style="color:var(--ghost);font-weight:600;letter-spacing:0.5px">${pair}</span>
+      <span style="color:var(--bright);font-weight:500">${rate.toFixed(4)}</span>
+      <span class="${up?'up':'dn'}" style="font-size:9px">${up?'+':''}${chg}%</span>
+      <span style="font-size:7px;color:var(--muted);background:var(--green-dim);padding:1px 5px;border-radius:10px;color:var(--green)">CANLI</span>
+    </div>`;
+  }).join('');
+  const fc = document.getElementById('fxCard');
+  if(fc) fc.innerHTML = html;
+  const fcard = document.getElementById('forexCard');
+  if(fcard) fcard.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// RENDER METALS
+// ════════════════════════════════════════════════════════════════════
+const metalMeta = {
+  gold:    {sym:'XAU', name:'Altın',    ico:'🥇', cc:'var(--amber)'},
+  silver:  {sym:'XAG', name:'Gümüş',   ico:'🥈', cc:'var(--ghost)'},
+  platinum:{sym:'XPT', name:'Platin',   ico:'⬜', cc:'var(--cyan)'},
+  palladium:{sym:'XPD',name:'Paladyum', ico:'🔘', cc:'var(--purple)'},
+};
+
+function renderMetals() {
+  const tryRate = state.fx['USD/TRY'] || 32.45;
+  const now = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit',minute:'2-digit'});
+  const mt = document.getElementById('metalTime');
+  if(mt) mt.textContent = `Güncellendi: ${now}`;
+
+  // Home metals strip
+  const hm = document.getElementById('homeMetals');
+  if(hm) {
+    hm.innerHTML = Object.entries(state.metals).map(([key, price]) => {
+      const m = metalMeta[key];
+      const grTL = (price / 31.1035 * tryRate).toFixed(2);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--wire);font-size:10px">
+        <span>${m.ico} <span style="color:var(--ghost);font-weight:600">${m.sym}</span> <span style="font-size:8px;color:var(--muted)">${m.name}</span></span>
+        <div style="text-align:right">
+          <div style="color:var(--bright)">$${price.toFixed(2)}</div>
+          <div style="font-size:8px;color:${m.cc}">₺${grTL}/gr</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Markets metal grid
+  const mg = document.getElementById('metalGrid');
+  if(mg) {
+    mg.innerHTML = Object.entries(state.metals).map(([key, price]) => {
+      const m = metalMeta[key];
+      const grTL = (price / 31.1035 * tryRate).toFixed(2);
+      const ozTL = (price * tryRate).toFixed(0);
+      return `<div class="com-card" style="--cc:${m.cc}">
+        <div style="font-size:20px;margin-bottom:4px">${m.ico}</div>
+        <div class="com-sym">${m.sym}</div>
+        <div class="com-name">${m.name}</div>
+        <div class="com-price">$${price.toFixed(2)}</div>
+        <div class="com-sub">₺${grTL}/gr</div>
+        <div class="com-sub" style="font-size:8px;color:var(--muted)">₺${parseInt(ozTL).toLocaleString('tr-TR')}/oz</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Gold calculator
+  const gc = document.getElementById('goldCalc');
+  if(gc) {
+    const g = state.metals.gold;
+    const t = tryRate;
+    const items = [
+      {l:'1 Gram Altın',    gr:1},
+      {l:'Çeyrek (1.75gr)', gr:1.75},
+      {l:'Yarım (3.5gr)',   gr:3.5},
+      {l:'Tam (7gr)',       gr:7},
+      {l:'Cumhuriyet (7.2gr)', gr:7.2},
+    ];
+    gc.innerHTML = `<div class="calc-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:12px">
+      ${items.slice(0,3).map(i=>`<div class="calc-cell">
+        <div class="calc-l">${i.l}</div>
+        <div class="calc-v">₺${(g/31.1035*t*i.gr).toLocaleString('tr-TR',{maximumFractionDigits:0})}</div>
+      </div>`).join('')}
+    </div>
+    <div class="calc-grid" style="margin-bottom:12px">
+      ${items.slice(3).map(i=>`<div class="calc-cell">
+        <div class="calc-l">${i.l}</div>
+        <div class="calc-v">₺${(g/31.1035*t*i.gr).toLocaleString('tr-TR',{maximumFractionDigits:0})}</div>
+      </div>`).join('')}
+    </div>
+    <div style="font-size:8px;color:var(--muted);text-align:center;margin-top:8px">
+      Kaynak: metals.live · USD/TRY: ${t.toFixed(2)} · ${now}
+    </div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// BUILD HOME
+// ════════════════════════════════════════════════════════════════════
+function getExp() { return state.bizData.rev.map((_,i) => state.bizData.mat[i]+state.bizData.staff[i]+state.bizData.rent[i]+state.bizData.util[i]+state.bizData.mkt[i]); }
+function getProfit() { return state.bizData.rev.map((r,i) => r - getExp()[i]); }
+const fmt = n => '₺'+n.toLocaleString('tr-TR');
+const fmtK = n => n>=1000 ? '₺'+(n/1000).toFixed(1)+'B' : fmt(n);
+
+function buildHome() {
+  const rev = state.bizData.rev.reduce((a,b)=>a+b,0);
+  const exp = getExp().reduce((a,b)=>a+b,0);
+  const profit = getProfit().reduce((a,b)=>a+b,0);
+  const saveRate = ((profit/rev)*100).toFixed(1);
+
+  document.getElementById('h-rev').textContent = fmtK(rev);
+  document.getElementById('h-exp').textContent = fmtK(exp);
+  document.getElementById('h-profit').textContent = fmtK(profit);
+  document.getElementById('h-save').textContent = '%'+saveRate;
+
+  // Score
+  const score = Math.min(99, Math.round(50 + (parseFloat(saveRate)/30)*30 + 10));
+  document.getElementById('scoreNum').textContent = score;
+  const arc = document.getElementById('scoreArc');
+  if(arc) {
+    const offset = 188.5 - (188.5 * score / 100);
+    arc.setAttribute('stroke-dashoffset', offset);
+    arc.setAttribute('stroke', score >= 70 ? 'var(--green)' : score >= 50 ? 'var(--amber)' : 'var(--red)');
+  }
+  const labels = [[80,'Mükemmel'],[60,'Güçlü'],[40,'Orta'],[0,'Zayıf']];
+  const lbl = labels.find(([min])=>score>=min)?.[1] || 'Zayıf';
+  document.getElementById('scoreLabel').textContent = lbl + ' İşletme';
+
+  buildHomeChart();
+  buildRecentTx();
+}
+
+function buildHomeChart() {
+  if(state.charts.home) state.charts.home.destroy();
+  const ctx = document.getElementById('homeChart')?.getContext('2d');
+  if(!ctx) return;
+  const exp = getExp();
+  const profit = getProfit();
+  state.charts.home = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:MONTHS,
+      datasets:[
+        {label:'Gelir',data:state.bizData.rev,backgroundColor:'rgba(255,179,0,0.65)',borderRadius:3,borderSkipped:false},
+        {label:'Gider',data:exp,backgroundColor:'rgba(255,68,68,0.55)',borderRadius:3,borderSkipped:false},
+        {label:'Kâr',data:profit,type:'line',borderColor:'var(--green)',backgroundColor:'rgba(0,230,118,0.06)',borderWidth:2,pointRadius:2,tension:0.4,fill:true},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#566088',font:{family:"'IBM Plex Mono'",size:8},boxWidth:8,padding:10}},
+        tooltip:{backgroundColor:'#0c0e1c',borderColor:'#1e2438',borderWidth:1,titleColor:'var(--amber)',bodyColor:'#566088',titleFont:{family:"'IBM Plex Mono'",size:9},bodyFont:{family:"'IBM Plex Mono'",size:9},callbacks:{label:c=>' '+fmt(c.raw)}}},
+      scales:{
+        x:{grid:{color:'rgba(24,28,48,0.8)'},ticks:{color:'#3a4268',font:{family:"'IBM Plex Mono'",size:8},maxRotation:0}},
+        y:{grid:{color:'rgba(24,28,48,0.8)'},ticks:{color:'#3a4268',font:{family:"'IBM Plex Mono'",size:8},callback:v=>'₺'+v.toLocaleString()}}
+      }
+    }
+  });
+}
+
+function buildRecentTx() {
+  const el = document.getElementById('recentList');
+  if(!el) return;
+  const recent = [...state.txs].sort((a,b)=>b.ts-a.ts).slice(0,5);
+  if(!recent.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-ic">📋</div><div class="empty-t">Henüz işlem yok.<br>+ EKLE butonuna bas.</div></div>';
+    return;
+  }
+  el.innerHTML = recent.map(tx => {
+    const isInc = tx.type==='income';
+    const ago = getTimeAgo(tx.ts);
+    return `<div class="tx-item">
+      <div class="tx-ico" style="background:${isInc?'var(--green-dim)':'var(--red-dim)'}">${tx.cat}</div>
+      <div class="tx-info">
+        <div class="tx-n">${tx.name}</div>
+        <div class="tx-d">${MONTHS_FULL[tx.month]} · ${ago}</div>
+      </div>
+      <div class="tx-a ${isInc?'up':'dn'}">${isInc?'+':'-'}${fmt(tx.amt)}</div>
+    </div>`;
+  }).join('');
+}
+
+function getTimeAgo(ts) {
+  const diff = Date.now() - ts;
+  if(diff < 3600000) return Math.round(diff/60000) + ' dk önce';
+  if(diff < 86400000) return Math.round(diff/3600000) + ' sa önce';
+  return Math.round(diff/86400000) + ' gün önce';
+}
+
+// ════════════════════════════════════════════════════════════════════
+// BUILD FINANCE
+// ════════════════════════════════════════════════════════════════════
+function buildFinance() {
+  const rev = state.bizData.rev.reduce((a,b)=>a+b,0);
+  const exp = getExp().reduce((a,b)=>a+b,0);
+  const profit = getProfit().reduce((a,b)=>a+b,0);
+  const margin = ((profit/rev)*100).toFixed(1);
+
+  document.getElementById('biz-rev').textContent = fmtK(rev);
+  document.getElementById('biz-exp').textContent = fmtK(exp);
+  document.getElementById('biz-profit').textContent = fmtK(profit);
+  document.getElementById('biz-margin').textContent = '%'+margin;
+
+  buildBizChart();
+  buildExpDonut();
+  buildMonthSummary();
+  buildSpendCats();
+  buildBudgetBars();
+  buildGoals();
+  buildAlerts();
+}
+
+function buildBizChart() {
+  if(state.charts.biz) state.charts.biz.destroy();
+  const ctx = document.getElementById('bizChart')?.getContext('2d');
+  if(!ctx) return;
+  const exp = getExp();
+  state.charts.biz = new Chart(ctx, {
+    type:'bar',
+    data:{labels:MONTHS,datasets:[
+      {label:'Gelir',data:state.bizData.rev,backgroundColor:'rgba(255,179,0,0.7)',borderRadius:3},
+      {label:'Gider',data:exp,backgroundColor:'rgba(255,68,68,0.6)',borderRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#566088',font:{family:"'IBM Plex Mono'",size:8},boxWidth:8}},tooltip:{backgroundColor:'#0c0e1c',borderColor:'#1e2438',borderWidth:1,titleColor:'var(--amber)',bodyColor:'#566088',callbacks:{label:c=>' '+fmt(c.raw)}}},scales:{x:{grid:{color:'rgba(24,28,48,0.8)'},ticks:{color:'#3a4268',font:{family:"'IBM Plex Mono'",size:8},maxRotation:0}},y:{grid:{color:'rgba(24,28,48,0.8)'},ticks:{color:'#3a4268',font:{family:"'IBM Plex Mono'",size:8},callback:v=>'₺'+v.toLocaleString()}}}}
+  });
+}
+
+function buildExpDonut() {
+  if(state.charts.donut) state.charts.donut.destroy();
+  const ctx = document.getElementById('expDonut')?.getContext('2d');
+  if(!ctx) return;
+  const cats = ['Hammadde','Personel','Kira','Faturalar','Pazarlama'];
+  const vals = [state.bizData.mat,state.bizData.staff,state.bizData.rent,state.bizData.util,state.bizData.mkt].map(a=>a.reduce((x,y)=>x+y,0));
+  state.charts.donut = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels:cats,datasets:[{data:vals,backgroundColor:['rgba(255,179,0,0.85)','rgba(255,68,68,0.85)','rgba(0,229,255,0.85)','rgba(0,230,118,0.85)','rgba(179,136,255,0.85)'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:'#566088',font:{family:"'IBM Plex Mono'",size:8},padding:8,boxWidth:8}},tooltip:{backgroundColor:'#0c0e1c',borderColor:'#1e2438',borderWidth:1,callbacks:{label:c=>' '+fmt(c.raw)}}}}
+  });
+}
+
+function buildMonthSummary() {
+  const el = document.getElementById('monthSummary');
+  if(!el) return;
+  const exp = getExp();
+  const profit = getProfit();
+  el.innerHTML = MONTHS.map((m,i) => {
+    const margin = state.bizData.rev[i] > 0 ? ((profit[i]/state.bizData.rev[i])*100).toFixed(1) : 0;
+    const isPos = profit[i] >= 0;
+    return `<div class="tx-item" style="margin-bottom:6px">
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:11px;font-weight:600;color:var(--bright)">${MONTHS_FULL[i]}</span>
+          <span style="font-size:10px;${isPos?'color:var(--green)':'color:var(--red)'}">${fmt(profit[i])}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-bottom:4px">
+          <span>Gelir: ${fmt(state.bizData.rev[i])}</span>
+          <span>Marj: %${margin}</span>
+        </div>
+        <div class="prog"><div class="prog-f" style="width:${Math.min(100,Math.round(state.bizData.rev[i]/30000*100))}%;background:${isPos?'var(--green)':'var(--red)'}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildSpendCats() {
+  const cats = [
+    {n:'Yemek & İçecek',ic:'🍽️',spent:2040,budget:2400,c:'#ffb300'},
+    {n:'Ulaşım',ic:'🚗',spent:720,budget:900,c:'#00e5ff'},
+    {n:'Alışveriş',ic:'🛍️',spent:1260,budget:1200,c:'#ff4444'},
+    {n:'Eğlence',ic:'🎬',spent:540,budget:750,c:'#b388ff'},
+    {n:'Sağlık',ic:'💊',spent:360,budget:600,c:'#00e676'},
+    {n:'Faturalar',ic:'💡',spent:480,budget:500,c:'#ff6eb4'},
+  ];
+  const el = document.getElementById('spendCats');
+  if(el) el.innerHTML = cats.map(c => {
+    const pct = Math.min(100,Math.round((c.spent/c.budget)*100));
+    const over = c.spent > c.budget;
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <span style="font-size:11px;color:var(--text)">${c.ic} ${c.n}</span>
+        <span style="font-size:9px;font-family:var(--mono);color:${over?'var(--red)':'var(--muted)'}">${fmt(c.spent)} / ${fmt(c.budget)}</span>
+      </div>
+      <div class="prog"><div class="prog-f" style="width:${pct}%;background:${over?'var(--red)':c.c}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function buildBudgetBars() {
+  const items = [
+    {n:'Hammadde',ic:'🛒',budget:9000,spent:state.bizData.mat[2],c:'#ffb300'},
+    {n:'Personel',ic:'👥',budget:4500,spent:state.bizData.staff[2],c:'#ff4444'},
+    {n:'Kira',ic:'🏠',budget:3000,spent:state.bizData.rent[2],c:'#00e5ff'},
+    {n:'Faturalar',ic:'💡',budget:1200,spent:state.bizData.util[2],c:'#00e676'},
+    {n:'Pazarlama',ic:'📢',budget:1000,spent:state.bizData.mkt[2],c:'#b388ff'},
+  ];
+  const el = document.getElementById('budgetBars');
+  if(el) el.innerHTML = items.map(it => {
+    const pct = Math.min(100,Math.round((it.spent/it.budget)*100));
+    const over = it.spent > it.budget;
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:11px">${it.ic} ${it.n}</span>
+        <span style="font-size:9px;font-family:var(--mono);color:${over?'var(--red)':'var(--muted)'}">${fmt(it.spent)} / ${fmt(it.budget)}</span>
+      </div>
+      <div class="prog" style="height:7px"><div class="prog-f" style="width:${pct}%;background:${over?'var(--red)':it.c}"></div></div>
+      <div style="font-size:8px;color:${over?'var(--red)':'var(--muted)'};margin-top:2px">${pct}% kullanıldı${over?' — AŞILDI':''}</div>
+    </div>`;
+  }).join('');
+
+  if(state.charts.budget) state.charts.budget.destroy();
+  const ctx = document.getElementById('budgetChart')?.getContext('2d');
+  if(ctx) {
+    state.charts.budget = new Chart(ctx, {
+      type:'line',
+      data:{labels:MONTHS,datasets:[
+        {label:'Gelir',data:state.bizData.rev,borderColor:'var(--amber)',borderWidth:1.5,pointRadius:2,tension:0.4,fill:false},
+        {label:'Gider',data:getExp(),borderColor:'var(--red)',borderWidth:1.5,pointRadius:2,tension:0.4,fill:false,borderDash:[4,4]},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#566088',font:{family:"'IBM Plex Mono'",size:8},boxWidth:8}},tooltip:{backgroundColor:'#0c0e1c',borderColor:'#1e2438',borderWidth:1,callbacks:{label:c=>' '+fmt(c.raw)}}},scales:{x:{grid:{color:'rgba(24,28,48,0.8)'},ticks:{color:'#3a4268',font:{family:"'IBM Plex Mono'",size:8},maxRotation:0}},y:{grid:{color:'rgba(24,28,48,0.8)'},ticks:{color:'#3a4268',font:{family:"'IBM Plex Mono'",size:8},callback:v=>'₺'+v.toLocaleString()}}}}
+    });
+  }
+}
+
+function buildGoals() {
+  const goals = [
+    {n:'Acil Fon',target:30000,current:18600,ic:'🛡️',c:'#00e676'},
+    {n:'Yeni Ekipman',target:15000,current:5400,ic:'⚙️',c:'#ffb300'},
+    {n:'Tatil Fonu',target:9000,current:2700,ic:'✈️',c:'#00e5ff'},
+    {n:'İşletme Büyütme',target:75000,current:25500,ic:'🚀',c:'#b388ff'},
+    {n:'Emeklilik Fonu',target:200000,current:34000,ic:'🏖️',c:'#ff6eb4'},
+  ];
+  const el = document.getElementById('goalsList');
+  if(el) el.innerHTML = goals.map(g => {
+    const pct = Math.round((g.current/g.target)*100);
+    const rem = g.target - g.current;
+    return `<div class="card">
+      <div style="padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:24px">${g.ic}</span>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--bright)">${g.n}</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:1px">${fmt(g.current)} / ${fmt(g.target)}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:20px;font-weight:800;color:${g.c}">${pct}%</div>
+            <div style="font-size:8px;color:var(--muted)">kalan: ${fmt(rem)}</div>
+          </div>
+        </div>
+        <div class="prog" style="height:8px"><div class="prog-f" style="width:${pct}%;background:${g.c}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildAlerts() {
+  const profit = getProfit();
+  const rev = state.bizData.rev.reduce((a,b)=>a+b,0);
+  const exp = getExp().reduce((a,b)=>a+b,0);
+  const margin = ((profit.reduce((a,b)=>a+b,0)/rev)*100).toFixed(1);
+  const alerts = [
+    {type:'good',title:'Gelir hedefi aşıldı',body:'Temmuz ayı tahmini %12.4 geçti. Yılın en iyi ayı.',time:'2 dk önce'},
+    {type:'warn',title:'Hammadde maliyeti yüksek',body:`Hammadde, gelirin %40.2'si. Sektör ortalaması %35.`,time:'18 dk önce'},
+    {type:'good',title:'AI modeli güncellendi',body:'Ocak 2026 için %88 güven skoru ile tahmin hazır.',time:'1 sa önce'},
+    {type:'info',title:'Döviz etkisi',body:'USD/TRY hareketleri ithal maliyetleri +%3.2 artırdı.',time:'2 sa önce'},
+    {type:'warn',title:'Marj hedefin altında',body:`Mevcut %${margin} marj, %30 hedefin altında.`,time:'4 sa önce'},
+    {type:'bad',title:'Personel/Gelir oranı',body:'Personel maliyeti gelirin %18.2\'si — optimizasyon önerilir.',time:'1 gün önce'},
+  ];
+  const el = document.getElementById('alertsList');
+  if(el) el.innerHTML = alerts.map(a => `<div class="alert-item">
+    <div class="adot ${a.type}"></div>
+    <div class="abody"><strong>${a.title}</strong>${a.body}<div class="atime">${a.time}</div></div>
+  </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// BUILD MARKETS
+// ════════════════════════════════════════════════════════════════════
+const cryptos = [
+  {s:'BTC',n:'Bitcoin',p:65420,chg:2.41},
+  {s:'ETH',n:'Ethereum',p:3180,chg:1.87},
+  {s:'BNB',n:'BNB',p:412,chg:-0.54},
+  {s:'SOL',n:'Solana',p:142,chg:4.22},
+  {s:'ADA',n:'Cardano',p:0.612,chg:-1.33},
+  {s:'AVAX',n:'Avalanche',p:38.4,chg:2.76},
+  {s:'MATIC',n:'Polygon',p:0.88,chg:1.12},
+  {s:'DOT',n:'Polkadot',p:8.4,chg:-2.1},
+];
+let liveCrypto = cryptos.map(c=>c.p);
+
+function buildMarkets() {
+  renderMetals();
+  buildCryptoGrid();
+  buildGoldChart();
+  fetchCrypto();
+  setInterval(fetchCrypto, 60000);
+  setInterval(() => {
+    liveCrypto = liveCrypto.map(p=>p*(1+(Math.random()-0.5)*0.01));
+    buildCryptoGrid();
+  }, 5000);
+}
+
+async function fetchCrypto() {
+  try {
+    const ids = 'bitcoin,ethereum,binancecoin,solana,cardano,avalanche-2,matic-network,polkadot';
+    const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
+    const d = await r.json();
+    const map = {'bitcoin':0,'ethereum':1,'binancecoin':2,'solana':3,'cardano':4,'avalanche-2':5,'matic-network':6,'polkadot':7};
+    Object.entries(map).forEach(([id,i]) => {
+      if(d[id]) {
+        liveCrypto[i] = d[id].usd;
+        if(d[id].usd_24h_change !== undefined) cryptos[i].chg = parseFloat(d[id].usd_24h_change.toFixed(2));
+      }
+    });
+    buildCryptoGrid();
+  } catch(e) {}
+}
+
+function buildCryptoGrid() {
+  const el = document.getElementById('cryptoGrid');
+  if(!el) return;
+  el.innerHTML = cryptos.map((c,i) => {
+    const price = liveCrypto[i];
+    const chg = c.chg;
+    const up = chg >= 0;
+    return `<div class="sc">
+      <div style="font-size:18px;margin-bottom:4px">${['₿','Ξ','🔶','◎','₳','🔺','🟣','⬡'][i]}</div>
+      <div class="sc-sym">${c.s}</div>
+      <div class="sc-nm">${c.n}</div>
+      <div class="sc-px">$${price > 100 ? price.toFixed(2) : price.toFixed(4)}</div>
+      <span class="badge ${up?'pos':'neg'}">${up?'+':''}${chg}%</span>
+    </div>`;
+  }).join('');
+}
+
+function buildGoldChart() {
+  if(state.charts.gold) state.charts.gold.destroy();
+  const ctx = document.getElementById('goldChart')?.getContext('2d');
+  if(!ctx) return;
+  // Simulate 30 data points if not enough
+  while(state.goldHistory.length < 10) {
+    state.goldHistory.unshift(state.metals.gold * (1+(Math.random()-0.5)*0.02));
+  }
+  state.charts.gold = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: state.goldHistory.map((_,i)=>''),
+      datasets:[{data:state.goldHistory,borderColor:'var(--amber)',backgroundColor:'rgba(255,179,0,0.06)',borderWidth:2,pointRadius:0,tension:0.4,fill:true}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0c0e1c',borderColor:'#1e2438',borderWidth:1,callbacks:{label:c=>' $'+c.raw.toFixed(2)}}},scales:{x:{display:false},y:{grid:{color:'rgba(24,28,48,0.8)'},ticks:{color:'#3a4268',font:{family:"'IBM Plex Mono'",size:8},callback:v=>'$'+v.toFixed(0)}}}}
+  });
+}
+
+function updateGoldChart() {
+  if(!state.charts.gold) return;
+  state.charts.gold.data.labels = state.goldHistory.map(()=>'');
+  state.charts.gold.data.datasets[0].data = state.goldHistory;
+  state.charts.gold.update('none');
+}
+
+function updateFXChart() {
+  if(!state.charts.fx) {
+    buildFXChart();
+    return;
+  }
+  state.charts.fx.data.labels = state.fxHistory.usdtry.map(()=>'');
+  state.charts.fx.data.datasets[0].data = state.fxHistory.usdtry;
+  state.charts.fx.update('none');
+}
+
+function buildFXChart() {
+  if(state.charts.fx) state.charts.fx.destroy();
+  const ctx = document.getElementById('fxChart')?.getContext('2d');
+  if(!ctx) return;
+  const hist = state.fxHistory.usdtry.length > 1 ? state.fxHistory.usdtry : [32.2,32.3,32.4,32.45,32.5,32.4,32.45];
+  state.charts.fx = new Chart(ctx, {
+    type:'line',
+    data:{labels:hist.map(()=>''),datasets:[{data:hist,borderColor:'var(--cyan)',backgroundColor:'rgba(0,229,255,0.05)',borderWidth:2,pointRadius:0,tension:0.4,fill:true}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0c0e1c',borderColor:'#1e2438',borderWidth:1,callbacks:{label:c=>' ₺'+c.raw.toFixed(4)}}},scales:{x:{display:false},y:{grid:{color:'rgba(24,28,48,0.8)'},ticks:{color:'#3a4268',font:{family:"'IBM Plex Mono'",size:8},callback:v=>'₺'+v.toFixed(2)}}}}
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════
+// FX CALCULATOR
+// ════════════════════════════════════════════════════════════════════
+function calcFX() {
+  const amt = parseFloat(document.getElementById('fxCalcAmt')?.value) || 1;
+  const from = document.getElementById('fxFrom')?.value;
+  const to = document.getElementById('fxTo')?.value;
+  if(!from || !to) return;
+  let rate = 1;
+  const fx = state.fx;
+  // Build conversion
+  const getUSD = (cur) => {
+    if(cur === 'USD') return 1;
+    if(cur === 'TRY') return 1/(fx['USD/TRY']||32.45);
+    if(cur === 'EUR') return 1/(fx['USD/EUR']||0.924);
+    if(cur === 'GBP') return fx['GBP/USD']||1.271;
+    return 1;
+  };
+  const fromUSD = getUSD(from);
+  const toUSD = getUSD(to);
+  rate = toUSD/fromUSD;
+  const result = amt * (1/getUSD(from)) * getUSD(to);
+  const el = document.getElementById('fxResult');
+  const re = document.getElementById('fxRate');
+  if(el) el.textContent = result.toLocaleString('tr-TR', {maximumFractionDigits:4}) + ' ' + to;
+  if(re) re.textContent = `1 ${from} = ${(1/getUSD(from)*getUSD(to)).toFixed(4)} ${to}`;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// BUILD AI
+// ════════════════════════════════════════════════════════════════════
+function buildAI() {
+  const d = state.bizData;
+  const avg = d.rev.slice(-3).reduce((a,b)=>a+b,0)/3;
+  const forecasts = [
+    {m:'Oca',r:Math.round(avg*1.05),c:88},{m:'Şub',r:Math.round(avg*0.97),c:82},
+    {m:'Mar',r:Math.round(avg*1.14),c:76},{m:'Nis',r:Math.round(avg*1.19),c:70},
+    {m:'May',r:Math.round(avg*1.28),c:63},{m:'Haz',r:Math.round(avg*1.42),c:56},
+  ];
+  const max = Math.max(...forecasts.map(f=>f.r));
+  const fc = document.getElementById('aiForecastCard');
+  if(fc) fc.innerHTML = forecasts.map(f => {
+    const pct = Math.round((f.r/max)*100);
+    const col = f.c>80?'var(--green)':f.c>70?'var(--amber)':'var(--ghost)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--wire);font-size:10px">
+      <span style="color:var(--ghost);width:28px;flex-shrink:0">${f.m}</span>
+      <div style="flex:1;height:5px;background:var(--wire2);border-radius:2px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${col};border-radius:2px;transition:width 1.2s"></div></div>
+      <span style="color:var(--bright);width:52px;text-align:right;font-size:9px">${fmt(f.r)}</span>
+      <span style="font-size:8px;width:30px;text-align:right;color:${col}">%${f.c}</span>
+    </div>`;
+  }).join('');
+
+  // AI Chart
+  if(state.charts.ai) state.charts.ai.destroy();
+  const ctx = document.getElementById('aiChart')?.getContext('2d');
+  if(ctx) {
+    const future = forecasts.map(f=>f.r);
+    state.charts.ai = new Chart(ctx, {
+      type:'line',
+      data:{
+        labels:[...MONTHS,'Oca*','Şub*','Mar*','Nis*','May*','Haz*'],
+        datasets:[
+          {label:'Gerçek',data:[...d.rev,...Array(6).fill(null)],borderColor:'var(--amber)',backgroundColor:'rgba(255,179,0,0.06)',borderWidth:2,pointRadius:2,tension:0.4,fill:true},
+          {label:'Tahmin',data:[...Array(12).fill(null),...future],borderColor:'var(--cyan)',backgroundColor:'rgba(0,229,255,0.04)',borderWidth:2,pointRadius:3,tension:0.4,fill:true,borderDash:[5,3]},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#566088',font:{family:"'IBM Plex Mono'",size:8},boxWidth:8}},tooltip:{backgroundColor:'#0c0e1c',borderColor:'#1e2438',borderWidth:1,callbacks:{label:c=>' '+fmt(c.raw)}}},scales:{x:{grid:{color:'rgba(24,28,48,0.8)'},ticks:{color:'#3a4268',font:{family:"'IBM Plex Mono'",size:8},maxRotation:0}},y:{grid:{color:'rgba(24,28,48,0.8)'},ticks:{color:'#3a4268',font:{family:"'IBM Plex Mono'",size:8},callback:v=>'₺'+v.toLocaleString()}}}}
+    });
+  }
+
+  const insights = [
+    {c:'var(--amber)',t:'MEVSİMSEL PATTERN',b:'Temmuz-Ağustos zirvesi (+%34). Haziran\'da stok artırımı önerilir.'},
+    {c:'var(--green)',t:'FIRSAT',b:'Gider/gelir oranı aylık %2.1 düşüyor. Q3\'te %28 marj hedefi yolunda.'},
+    {c:'var(--cyan)',t:'DÖVİZ ETKİSİ',b:'USD/TRY bu ay +%3.2. İthal maliyetleri artıyor. Yerel tedarikçi alternatifi değerlendir.'},
+    {c:'var(--purple)',t:'BÜYÜMEöNERİSİ',b:'Paket servis kanalı %13 katkı sağlıyor. Online varlık artırılması potansiyeli yüksek.'},
+  ];
+  const ii = document.getElementById('aiInsights');
+  if(ii) ii.innerHTML = insights.map(ins => `
+    <div style="background:var(--card);border:1px solid var(--wire);border-radius:10px;overflow:hidden">
+      <div style="height:2px;background:${ins.c}"></div>
+      <div style="padding:12px 14px;border-left:3px solid ${ins.c};margin:8px 10px;border-radius:0 6px 6px 0;background:rgba(0,0,0,0.2)">
+        <div style="font-size:8px;letter-spacing:1.5px;color:${ins.c};margin-bottom:4px;text-transform:uppercase">${ins.t}</div>
+        <div style="font-size:10px;color:var(--ghost);line-height:1.7">${ins.b}</div>
+      </div>
+    </div>`).join('');
+
+  const tips = [
+    {ic:'💡',t:'Hammadde Optimizasyonu',b:'Toplu alım yaparak maliyeti %8-12 düşürebilirsiniz.'},
+    {ic:'📱',t:'Online Kanal Büyütme',b:'Online siparişler en hızlı büyüyen kanal. Entegrasyon artırın.'},
+    {ic:'⚡',t:'Enerji Verimliliği',b:'Yaz aylarında fatura maliyeti yüksek. LED & izolasyon tasarruf sağlar.'},
+  ];
+  const at = document.getElementById('aiTips');
+  if(at) at.innerHTML = tips.map(t => `
+    <div class="card" style="padding:12px 14px;display:flex;gap:12px;align-items:center">
+      <span style="font-size:22px">${t.ic}</span>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--bright);margin-bottom:3px">${t.t}</div>
+        <div style="font-size:9px;color:var(--ghost);line-height:1.6">${t.b}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════════════════
+function goPage(name, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.bn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('mainEl').scrollTop = 0;
+  if(name === 'markets' && !state.charts.fx) {
+    setTimeout(buildFXChart, 200);
+  }
+}
+
+function switchTab(group, name, el) {
+  const prefixes = {fin:['business','personal','budget','goals','alerts'], mkt:['gold','crypto','forex','calc','portfolio']};
+  const tabs = prefixes[group] || [];
+  tabs.forEach(t => {
+    const el2 = document.getElementById(`${group==='fin'?'f':'m'}tab-${t}`);
+    if(el2) el2.style.display = t===name?'block':'none';
+  });
+  const tabBar = document.getElementById(group==='fin'?'finTabs':'mktTabs');
+  if(tabBar) tabBar.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// TRANSACTION MODAL
+// ════════════════════════════════════════════════════════════════════
+const incCats = [{i:'💼',l:'Masa'},{i:'📦',l:'Paket'},{i:'💻',l:'Online'},{i:'🎯',l:'Catering'},{i:'💰',l:'Diğer Gelir'},{i:'📊',l:'Yatırım'},{i:'🎁',l:'Hediye'},{i:'💹',l:'Faiz'}];
+const expCats = [{i:'🛒',l:'Hammadde'},{i:'👥',l:'Personel'},{i:'🏠',l:'Kira'},{i:'💡',l:'Fatura'},{i:'📢',l:'Pazarlama'},{i:'🔧',l:'Bakım'},{i:'🚗',l:'Ulaşım'},{i:'📦',l:'Kargo'}];
+
+function openAddModal() {
+  state.txType = 'income';
+  state.selCat = null;
+  document.getElementById('t-inc').classList.add('active');
+  document.getElementById('t-exp').classList.remove('active');
+  document.getElementById('txAmt').value = '';
+  document.getElementById('txDesc').value = '';
+  renderCatGrid();
+  openMo('addMo');
+}
+
+function setTxType(type) {
+  state.txType = type;
+  state.selCat = null;
+  document.getElementById('t-inc').classList.toggle('active', type==='income');
+  document.getElementById('t-exp').classList.toggle('active', type==='expense');
+  renderCatGrid();
+}
+
+function renderCatGrid() {
+  const cats = state.txType==='income' ? incCats : expCats;
+  document.getElementById('catGrid').innerHTML = cats.map((c,i) =>
+    `<div class="catbtn ${state.selCat===i?'sel':''}" onclick="selCat(${i})">
+      <span class="ci">${c.i}</span><span class="cl">${c.l}</span>
+    </div>`
+  ).join('');
+}
+
+function selCat(i) {
+  state.selCat = i;
+  const cats = state.txType==='income' ? incCats : expCats;
+  state.selCatData = cats[i];
+  renderCatGrid();
+}
+
+function saveTx() {
+  const amt = parseFloat(document.getElementById('txAmt').value);
+  if(!amt || amt <= 0) { showNotif('⚠️','Hata','Geçerli bir tutar girin'); return; }
+  const cats = state.txType==='income' ? incCats : expCats;
+  const cat = state.selCat !== null ? cats[state.selCat] : cats[0];
+  const monthIdx = document.getElementById('txMonth').selectedIndex;
+  const desc = document.getElementById('txDesc').value;
+
+  state.txs.push({type:state.txType, cat:cat.i, name:cat.l, amt, month:monthIdx, desc, ts:Date.now()});
+
+  if(state.txType==='income') state.bizData.rev[monthIdx] += amt;
+  else state.bizData.mat[monthIdx] += amt;
+
+  closeMo('addMo');
+  buildHome();
+  buildFinance();
+  buildAI();
+  showNotif(state.txType==='income'?'✅':'💸','İşlem kaydedildi', `${fmt(amt)} ${state.txType==='income'?'gelir':'gider'} eklendi`);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// SECTOR MODAL
+// ════════════════════════════════════════════════════════════════════
+const sectors = ['Kafe & Restaurant','Perakende Mağaza','E-Ticaret','Hizmet Sektörü','Üretim','İnşaat','Sağlık','Eğitim','Teknoloji','Diğer'];
+
+function openSectorModal() {
+  document.getElementById('sectorList').innerHTML = sectors.map(s =>
+    `<div class="tx-item" onclick="selectSector('${s}')">
+      <div style="flex:1;font-size:12px;color:var(--bright)">${s}</div>
+      ${document.getElementById('setBizType').textContent===s?'<span style="color:var(--amber)">◈</span>':''}
+    </div>`
+  ).join('');
+  openMo('sectorMo');
+}
+
+function selectSector(s) {
+  document.getElementById('setBizType').textContent = s;
+  closeMo('sectorMo');
+  showNotif('✅','Sektör güncellendi',s);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════════════════════════════════
+function editName() {
+  const name = prompt('İşletme adı:');
+  if(name) {
+    state.bizName = name;
+    document.getElementById('setBizName').textContent = name;
+    document.getElementById('profileName').textContent = name;
+    showNotif('✅','Güncellendi',name);
+  }
+}
+
+function editCity() {
+  const city = prompt('Şehir adı (Türkçe):');
+  if(city) {
+    state.city = city;
+    document.getElementById('setCity').textContent = city;
+    fetchWeather();
+  }
+}
+
+function resetData() {
+  if(confirm('Tüm işlemler silinsin mi?')) {
+    state.txs = [];
+    buildRecentTx();
+    showNotif('🗑️','Sıfırlandı','Tüm işlemler silindi');
+  }
+}
+
+function promptInstall() {
+  if(state.installPrompt) {
+    state.installPrompt.prompt();
+  } else {
+    alert('Tarayıcının "Ana Ekrana Ekle" özelliğini kullan:\n📱 Chrome: Menü → Ana ekrana ekle\n🍎 Safari: Paylaş → Ana Ekrana Ekle');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// MODAL HELPERS
+// ════════════════════════════════════════════════════════════════════
+function openMo(id) { document.getElementById(id).classList.add('open'); }
+function closeMo(id) { document.getElementById(id).classList.remove('open'); }
+function openPremium() { openMo('premMo'); }
+
+document.querySelectorAll('.mo').forEach(mo => {
+  mo.addEventListener('click', e => { if(e.target===mo) mo.classList.remove('open'); });
+});
+
+// ════════════════════════════════════════════════════════════════════
+// NOTIFICATION
+// ════════════════════════════════════════════════════════════════════
+function showNotif(ic, title, sub) {
+  const existing = document.querySelector('.notif');
+  if(existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = 'notif';
+  el.innerHTML = `<span class="notif-ic">${ic}</span><div><div class="notif-t">${title}</div><div class="notif-s">${sub}</div></div>`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// SERVICE WORKER
+// ════════════════════════════════════════════════════════════════════
+if('serviceWorker' in navigator) {
+  const sw = `
+    const C='apex-v2';
+    self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.add(self.location.href))));
+    self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match(self.location.href)))));
+  `;
+  const blob = new Blob([sw],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+</script>
+</body>
+</html>
